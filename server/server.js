@@ -37,53 +37,30 @@ const __dirname = path.dirname(__filename);
 // --------------------------------------
 // CORS CONFIG (MUST BE BEFORE ROUTES)
 // --------------------------------------
+// --------------------------------------
+// CORS CONFIG (MUST BE BEFORE ROUTES)
+// --------------------------------------
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
   "http://localhost:3000",
-  "https://asap2-o-client.onrender.com",
+  "https://asap2-o-client.onrender.com", // your Render client
 ];
 
-// Allow dynamic CLIENT_URL from env (optional)
 if (process.env.CLIENT_URL) {
   allowedOrigins.push(process.env.CLIENT_URL);
 }
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Allow non-browser tools (no origin) like Postman / curl
-      if (!origin) return callback(null, true);
+const corsOptions = {
+  origin: allowedOrigins,         // let cors handle the array
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "token"],
+  optionsSuccessStatus: 200,
+};
 
-      // Allow exact whitelisted origins
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      // Allow ALL localhost origins (for dev flexibility)
-      if (origin.startsWith("http://localhost:")) {
-        console.log(`🔧 Allowing localhost origin: ${origin}`);
-        return callback(null, true);
-      }
-
-      // Allow ALL Vercel preview deployments (optional, but useful)
-      if (origin.endsWith(".vercel.app")) {
-        console.log(`🌐 Allowing Vercel origin by wildcard: ${origin}`);
-        return callback(null, true);
-      }
-
-      console.log(`❌ CORS blocked origin: ${origin}`);
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "token"],
-    optionsSuccessStatus: 200,
-  })
-);
-
-// Handle preflight for any route
-app.options("*", cors());
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // use SAME options for preflight
 
 // Log incoming requests for debugging
 app.use((req, res, next) => {
@@ -92,6 +69,7 @@ app.use((req, res, next) => {
   );
   next();
 });
+
 
 // --------------------------------------
 // INITIALIZE SERVICES (DB, CLOUDINARY)
