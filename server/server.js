@@ -35,32 +35,30 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // --------------------------------------
-// CORS CONFIG (MUST BE BEFORE ROUTES)
+// SIMPLE GLOBAL CORS (MUST BE BEFORE ROUTES)
 // --------------------------------------
-// --------------------------------------
-// CORS CONFIG (MUST BE BEFORE ROUTES)
-// --------------------------------------
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:5174",
-  "http://localhost:3000",
-  "https://asap2-o-client.onrender.com", // your Render client
-];
+// This will reflect any Origin that the browser sends
+// and allow credentials. Very permissive but reliable.
+app.use(
+  cors({
+    origin: true,        // reflect request origin
+    credentials: true,   // allow cookies / auth headers
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "token"],
+    optionsSuccessStatus: 200,
+  })
+);
 
-if (process.env.CLIENT_URL) {
-  allowedOrigins.push(process.env.CLIENT_URL);
-}
-
-const corsOptions = {
-  origin: allowedOrigins,         // let cors handle the array
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "token"],
-  optionsSuccessStatus: 200,
-};
-
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // use SAME options for preflight
+app.options(
+  "*",
+  cors({
+    origin: true,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "token"],
+    optionsSuccessStatus: 200,
+  })
+);
 
 // Log incoming requests for debugging
 app.use((req, res, next) => {
@@ -69,7 +67,6 @@ app.use((req, res, next) => {
   );
   next();
 });
-
 
 // --------------------------------------
 // INITIALIZE SERVICES (DB, CLOUDINARY)
@@ -177,7 +174,7 @@ if (!process.env.VERCEL) {
         if (err.code === "EADDRINUSE") {
           console.error(
             `⚠️ Port ${port} is already in use. ` +
-            `Either stop the other process or set a different PORT in your .env`
+              `Either stop the other process or set a different PORT in your .env`
           );
         } else {
           console.error("❌ Server error:", err);
