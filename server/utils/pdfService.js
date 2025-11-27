@@ -1,5 +1,3 @@
-// server/utils/pdfService.js
-
 import puppeteer from "puppeteer";
 import path from "path";
 import fs from "fs";
@@ -15,17 +13,16 @@ export const generatePdf = async (
   const tempFilePath = path.join(os.tmpdir(), safeFilename);
 
   try {
-    // Launch Chromium installed by `npx puppeteer browsers install chrome`
     browser = await puppeteer.launch({
       headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      args: ["--no-sandbox", "--disable-setuid-sandbox"]
     });
 
     const page = await browser.newPage();
 
     await page.setContent(htmlContent, {
       waitUntil: ["domcontentloaded", "networkidle0"],
-      timeout: 30_000,
+      timeout: 30000
     });
 
     await page.pdf({
@@ -36,8 +33,8 @@ export const generatePdf = async (
         top: "0px",
         right: "0px",
         bottom: "0px",
-        left: "0px",
-      },
+        left: "0px"
+      }
     });
 
     console.log(`☁️ Uploading PDF to Cloudinary: ${safeFilename}`);
@@ -45,10 +42,9 @@ export const generatePdf = async (
       resource_type: "raw",
       folder: "resumes",
       public_id: path.parse(safeFilename).name,
-      overwrite: true,
+      overwrite: true
     });
 
-    // cleanup temp file
     try {
       fs.unlinkSync(tempFilePath);
     } catch (e) {
@@ -77,5 +73,6 @@ export const generatePdf = async (
     }
   }
 };
+
 
 
