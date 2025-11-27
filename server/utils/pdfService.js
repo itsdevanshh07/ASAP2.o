@@ -11,20 +11,20 @@ export const generatePdf = async (htmlContent, filename = `resume-${Date.now()}.
 
     try {
         console.log("🚀 Launching Puppeteer...");
-
-        // Launch standard puppeteer. 
-        // We use --no-sandbox which is required for Render/Docker environments.
+        
+        // Launch standard puppeteer
+        // --no-sandbox is required for Render
+        // --disable-dev-shm-usage helps prevent crashes in low-memory containers
         browser = await puppeteer.launch({
             headless: true,
-            args: ["--no-sandbox", "--disable-setuid-sandbox"],
+            args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
         });
 
         const page = await browser.newPage();
 
-        // Set content and wait for network to be idle
         await page.setContent(htmlContent, {
             waitUntil: ["domcontentloaded", "networkidle0"],
-            timeout: 30_000, // 30s timeout
+            timeout: 30000
         });
 
         await page.pdf({
@@ -35,20 +35,18 @@ export const generatePdf = async (htmlContent, filename = `resume-${Date.now()}.
                 top: "0px",
                 right: "0px",
                 bottom: "0px",
-                left: "0px",
-            },
+                left: "0px"
+            }
         });
 
-        // Upload to Cloudinary
         console.log(`☁️ Uploading PDF to Cloudinary: ${safeFilename}`);
         const uploadResult = await cloudinary.uploader.upload(tempFilePath, {
             resource_type: "raw",
             folder: "resumes",
             public_id: path.parse(safeFilename).name,
-            overwrite: true,
+            overwrite: true
         });
 
-        // Clean up temp file
         try {
             fs.unlinkSync(tempFilePath);
         } catch (e) {
@@ -56,10 +54,8 @@ export const generatePdf = async (htmlContent, filename = `resume-${Date.now()}.
         }
 
         return uploadResult.secure_url;
-
     } catch (error) {
-        console.error("PDF Generation Error:", error);
-        // Clean up if something was written
+        console.error("PDF Generation Error:", error.message || error);
         if (fs.existsSync(tempFilePath)) {
             try {
                 fs.unlinkSync(tempFilePath);
@@ -68,10 +64,12 @@ export const generatePdf = async (htmlContent, filename = `resume-${Date.now()}.
         throw new Error("Failed to generate PDF: " + error.message);
     } finally {
         if (browser) {
-            await browser.close();
+            try {
+                await browser.close();
+            } catch (e) {
+                console.error("Error closing browser:", e);
+            }
         }
     }
 };
-
-
 
