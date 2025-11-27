@@ -41,7 +41,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
   "http://localhost:3000",
-  "https://client-rbim26nsm-devansh-dhyanis-projects.vercel.app",
+  "https://asap2-o.onrender.com",
 ];
 
 // Allow dynamic CLIENT_URL from env (optional)
