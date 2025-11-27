@@ -37,8 +37,6 @@ const __dirname = path.dirname(__filename);
 // --------------------------------------
 // SIMPLE GLOBAL CORS (MUST BE BEFORE ROUTES)
 // --------------------------------------
-// This will reflect any Origin that the browser sends
-// and allow credentials. Very permissive but reliable.
 app.use(
   cors({
     origin: true,        // reflect request origin
@@ -128,6 +126,12 @@ app.get("/debug-sentry", function (req, res) {
 });
 
 // --------------------------------------
+// PUBLIC JOB ROUTES (NO CLERK)
+// --------------------------------------
+// ✅ Make /api/jobs fully public so it doesn't depend on Clerk
+app.use("/api/jobs", jobRoutes);
+
+// --------------------------------------
 // CLERK MIDDLEWARE (AFTER PUBLIC ROUTES)
 // --------------------------------------
 if (!process.env.CLERK_PUBLISHABLE_KEY) {
@@ -147,9 +151,9 @@ app.use(
 // --------------------------------------
 // PROTECTED ROUTES (REQUIRE CLERK AUTH)
 // --------------------------------------
+// ⬇ company + users remain protected
 app.use("/api/company", companyRoutes);
 app.use("/api/users", requireAuth(), userRoutes);
-app.use("/api/jobs", jobRoutes);
 
 // --------------------------------------
 // SENTRY ERROR HANDLER
@@ -159,7 +163,6 @@ Sentry.setupExpressErrorHandler(app);
 // --------------------------------------
 // START SERVER (LOCAL ONLY)
 // --------------------------------------
-// Start server if not running in Vercel (Serverless) environment
 if (!process.env.VERCEL) {
   const PORT = process.env.PORT || 5000;
 
@@ -189,4 +192,5 @@ if (!process.env.VERCEL) {
 // EXPORT FOR VERCEL (SERVERLESS)
 // --------------------------------------
 export default app;
+
 
