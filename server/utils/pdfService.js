@@ -1,39 +1,11 @@
 // server/utils/pdfService.js
 
-import chromium from "@sparticuz/chromium";
-import puppeteer from "puppeteer-core";
+import puppeteer from "puppeteer";
 import path from "path";
 import fs from "fs";
 import os from "os";
 import { v2 as cloudinary } from "cloudinary";
 
-// Configure chromium for Render / serverless
-chromium.setHeadlessMode = true;
-chromium.setGraphicsMode = false;
-
-/**
- * Launches a headless Chromium instance compatible with Render.
- */
-const launchBrowser = async () => {
-  // On Render (and other serverless), always use @sparticuz/chromium
-  const executablePath = await chromium.executablePath;
-
-  console.log("🚀 Launching Chromium with executablePath:", executablePath);
-
-  const browser = await puppeteer.launch({
-    args: chromium.args,
-    defaultViewport: chromium.defaultViewport,
-    executablePath,
-    headless: chromium.headless,
-  });
-
-  return browser;
-};
-
-/**
- * Generate a PDF from HTML and upload to Cloudinary.
- * Returns the secure URL of the PDF.
- */
 export const generatePdf = async (
   htmlContent,
   filename = `resume-${Date.now()}.pdf`
@@ -43,7 +15,12 @@ export const generatePdf = async (
   const tempFilePath = path.join(os.tmpdir(), safeFilename);
 
   try {
-    browser = await launchBrowser();
+    // Launch Chromium installed by `npx puppeteer browsers install chrome`
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+
     const page = await browser.newPage();
 
     await page.setContent(htmlContent, {
@@ -71,7 +48,7 @@ export const generatePdf = async (
       overwrite: true,
     });
 
-    // Cleanup temp file
+    // cleanup temp file
     try {
       fs.unlinkSync(tempFilePath);
     } catch (e) {
@@ -100,4 +77,5 @@ export const generatePdf = async (
     }
   }
 };
+
 
