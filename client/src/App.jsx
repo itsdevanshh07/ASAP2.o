@@ -47,7 +47,7 @@ const AppContent = () => {
             <PageTransition>
               <div className="p-6">
                 <h1 className="text-2xl font-semibold mb-4">Resume Builder</h1>
-                <ResumeBuilder apiBase={import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'} />
+                <ResumeBuilder apiBase={import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'} />
               </div>
             </PageTransition>
           } />
@@ -65,7 +65,7 @@ const AppContent = () => {
       </AnimatePresence>
 
       {/* Floating Chatbot Widget */}
-      {!location.pathname.startsWith('/dashboard') && <ChatbotPanel apiBase={import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'} />}
+      {!location.pathname.startsWith('/dashboard') && <ChatbotPanel apiBase={import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'} />}
       {!location.pathname.startsWith('/dashboard') && <Footer />}
     </div>
   )

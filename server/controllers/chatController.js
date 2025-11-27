@@ -1,5 +1,7 @@
 import { generateChatResponse, generateResume } from "../utils/aiService.js";
 import { getFallbackResponse } from "../utils/fallbackService.js";
+import { getTemplateHtml } from "../utils/resumeTemplates.js";
+import { generatePdf } from "../utils/pdfService.js";
 
 export const chatWithAI = async (req, res) => {
     const { message, history } = req.body;
@@ -29,9 +31,6 @@ export const chatWithAI = async (req, res) => {
         });
     }
 };
-
-import { getTemplateHtml } from "../utils/resumeTemplates.js";
-import { generatePdf } from "../utils/pdfService.js";
 
 export const createResume = async (req, res) => {
     const { userNotes, template = 'combination' } = req.body;
