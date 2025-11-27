@@ -26,7 +26,7 @@ const app = express();
 const allowedOrigins = [
     "http://localhost:5173",
     "http://localhost:3000",
-    "https://client-rbim26nsm-devansh-dhyanis-projects.vercel.app",
+    "https://asap2-o-client.onrender.com",
 ];
 
 if (process.env.CLIENT_URL) {
