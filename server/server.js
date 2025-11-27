@@ -184,7 +184,8 @@ Sentry.setupExpressErrorHandler(app);
 // --------------------------------------
 // START SERVER (LOCAL ONLY)
 // --------------------------------------
-if (process.env.NODE_ENV !== "production") {
+// Start server if not running in Vercel (Serverless) environment
+if (!process.env.VERCEL) {
   const PORT = process.env.PORT || 5000;
 
   const startServer = (port) => {
