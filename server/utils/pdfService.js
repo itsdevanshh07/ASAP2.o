@@ -1,12 +1,39 @@
 // server/utils/pdfService.js
 
-import puppeteer from "puppeteer";
+import chromium from "@sparticuz/chromium";
+import puppeteer from "puppeteer-core";
 import path from "path";
 import fs from "fs";
 import os from "os";
 import { v2 as cloudinary } from "cloudinary";
 
-// Generate a PDF from HTML and upload to Cloudinary
+// Configure chromium for Render / serverless
+chromium.setHeadlessMode = true;
+chromium.setGraphicsMode = false;
+
+/**
+ * Launches a headless Chromium instance compatible with Render.
+ */
+const launchBrowser = async () => {
+  // On Render (and other serverless), always use @sparticuz/chromium
+  const executablePath = await chromium.executablePath;
+
+  console.log("🚀 Launching Chromium with executablePath:", executablePath);
+
+  const browser = await puppeteer.launch({
+    args: chromium.args,
+    defaultViewport: chromium.defaultViewport,
+    executablePath,
+    headless: chromium.headless,
+  });
+
+  return browser;
+};
+
+/**
+ * Generate a PDF from HTML and upload to Cloudinary.
+ * Returns the secure URL of the PDF.
+ */
 export const generatePdf = async (
   htmlContent,
   filename = `resume-${Date.now()}.pdf`
@@ -16,12 +43,7 @@ export const generatePdf = async (
   const tempFilePath = path.join(os.tmpdir(), safeFilename);
 
   try {
-    // Launch puppeteer with bundled Chromium
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
-
+    browser = await launchBrowser();
     const page = await browser.newPage();
 
     await page.setContent(htmlContent, {
@@ -41,7 +63,6 @@ export const generatePdf = async (
       },
     });
 
-    // Upload to Cloudinary as raw file
     console.log(`☁️ Uploading PDF to Cloudinary: ${safeFilename}`);
     const uploadResult = await cloudinary.uploader.upload(tempFilePath, {
       resource_type: "raw",
@@ -50,14 +71,13 @@ export const generatePdf = async (
       overwrite: true,
     });
 
-    // Cleanup
+    // Cleanup temp file
     try {
       fs.unlinkSync(tempFilePath);
     } catch (e) {
       console.error("Temp file cleanup error:", e);
     }
 
-    // Return URL to frontend
     return uploadResult.secure_url;
   } catch (error) {
     console.error("PDF Generation Error:", error.message || error);
@@ -80,3 +100,4 @@ export const generatePdf = async (
     }
   }
 };
+
