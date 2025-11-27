@@ -5,17 +5,45 @@ import fs from "fs";
 import os from "os";
 import { v2 as cloudinary } from "cloudinary";
 
-const isProd = !!process.env.VERCEL;
+const isProd = process.env.NODE_ENV === "production" || !!process.env.VERCEL || !!process.env.RENDER;
 
 // Helper: get correct Chrome/Edge executable path
 const getExecutablePath = async () => {
+    // 1. If on Render, try standard system paths first (if buildpack is used), then fallback to sparticuz
+    if (process.env.RENDER) {
+        const renderPaths = [
+            "/usr/bin/google-chrome",
+            "/usr/bin/google-chrome-stable",
+            "/usr/bin/chromium",
+            "/usr/bin/chromium-browser",
+            "/opt/render/.cache/puppeteer/chrome/linux-133.0.6943.53/chrome-linux64/chrome" // Example path
+        ];
+        for (const p of renderPaths) {
+            if (fs.existsSync(p)) {
+                console.log(`✅ Found Render browser executable at: ${p}`);
+                return p;
+            }
+        }
+        // Fallback to sparticuz if system chrome not found
+        console.log("⚠️ System Chrome not found on Render, trying @sparticuz/chromium...");
+    }
+
     if (isProd) {
-        // Vercel / serverless: use sparticuz chromium
-        const execPath = await chromium.executablePath();
-        if (!execPath) {
+        // Vercel / serverless / Render fallback: use sparticuz chromium
+        try {
+            const execPath = await chromium.executablePath();
+            if (execPath) {
+                return execPath;
+            }
+        } catch (e) {
+            console.error("Error getting sparticuz executable path:", e);
+        }
+
+        // If we are here in prod and haven't returned, we might be in trouble if it's Vercel.
+        // But for Render we might have missed a path.
+        if (process.env.VERCEL) {
             throw new Error("Chromium executablePath is null on Vercel.");
         }
-        return execPath;
     }
 
     // Local dev: allow override via .env
@@ -69,10 +97,11 @@ export const generatePdf = async (htmlContent, filename = `resume-${Date.now()}.
 
         const launchOptions = isProd
             ? {
-                args: chromium.args,
+                args: [...chromium.args, "--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
                 defaultViewport: chromium.defaultViewport,
                 executablePath,
                 headless: chromium.headless,
+                ignoreHTTPSErrors: true,
             }
             : {
                 args: ["--no-sandbox", "--disable-setuid-sandbox"],
