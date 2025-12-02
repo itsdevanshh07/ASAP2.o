@@ -37,55 +37,28 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // --------------------------------------
-// CORS CONFIG (MUST BE BEFORE ROUTES)
+// SIMPLE GLOBAL CORS (MUST BE BEFORE ROUTES)
 // --------------------------------------
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:5174",
-  "http://localhost:3000",
-  "https://client-rbim26nsm-devansh-dhyanis-projects.vercel.app",
-];
-
-// Allow dynamic CLIENT_URL from env (optional)
-if (process.env.CLIENT_URL) {
-  allowedOrigins.push(process.env.CLIENT_URL);
-}
-
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // Allow non-browser tools (no origin) like Postman / curl
-      if (!origin) return callback(null, true);
-
-      // Allow exact whitelisted origins
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      // Allow ALL localhost origins (for dev flexibility)
-      if (origin.startsWith("http://localhost:")) {
-        console.log(`🔧 Allowing localhost origin: ${origin}`);
-        return callback(null, true);
-      }
-
-      // Allow ALL Vercel preview deployments (optional, but useful)
-      if (origin.endsWith(".vercel.app")) {
-        console.log(`🌐 Allowing Vercel origin by wildcard: ${origin}`);
-        return callback(null, true);
-      }
-
-      console.log(`❌ CORS blocked origin: ${origin}`);
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
+    origin: true,        // reflect request origin
+    credentials: true,   // allow cookies / auth headers
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "token"],
     optionsSuccessStatus: 200,
   })
 );
 
-// Handle preflight for any route
-app.options("*", cors());
+app.options(
+  "*",
+  cors({
+    origin: true,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "token"],
+    optionsSuccessStatus: 200,
+  })
+);
 
 // Log incoming requests for debugging
 app.use((req, res, next) => {
@@ -155,6 +128,12 @@ app.get("/debug-sentry", function (req, res) {
 });
 
 // --------------------------------------
+// PUBLIC JOB ROUTES (NO CLERK)
+// --------------------------------------
+// ✅ Make /api/jobs fully public so it doesn't depend on Clerk
+app.use("/api/jobs", jobRoutes);
+
+// --------------------------------------
 // CLERK MIDDLEWARE (AFTER PUBLIC ROUTES)
 // --------------------------------------
 if (!process.env.CLERK_PUBLISHABLE_KEY) {
@@ -174,9 +153,9 @@ app.use(
 // --------------------------------------
 // PROTECTED ROUTES (REQUIRE CLERK AUTH)
 // --------------------------------------
+// ⬇ company + users remain protected
 app.use("/api/company", companyRoutes);
 app.use("/api/users", requireAuth(), userRoutes);
-app.use("/api/jobs", jobRoutes);
 app.use("/api/admin", requireAuth(), adminRoutes);
 app.use("/api/gamification", gamificationRoutes);
 
@@ -188,7 +167,6 @@ Sentry.setupExpressErrorHandler(app);
 // --------------------------------------
 // START SERVER (LOCAL ONLY)
 // --------------------------------------
-// Start server if not running in Vercel (Serverless) environment
 if (!process.env.VERCEL) {
   const PORT = process.env.PORT || 5000;
 
