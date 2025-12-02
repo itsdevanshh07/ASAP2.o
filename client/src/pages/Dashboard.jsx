@@ -5,14 +5,14 @@ import { AppContext } from '../context/AppContext'
 import asap_logo_light from '../assets/logo_rocket_generated.svg'
 import asap_logo_dark from '../assets/logo_rocket_generated.svg'
 import { useTheme } from '../context/ThemeContext'
-import { Menu, X, Home, PlusSquare, FileText, LogOut } from 'lucide-react'
+import { Menu, X, Home, PlusSquare, FileText, LogOut, Users, Sun, Moon } from 'lucide-react'
 
 const Dashboard = () => {
 
     const navigate = useNavigate()
     const location = useLocation()
     const { companyData, setCompanyData, setCompanyToken } = useContext(AppContext)
-    const { theme } = useTheme()
+    const { theme, toggleTheme } = useTheme()
     const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
     // Function to logout for company
@@ -25,14 +25,15 @@ const Dashboard = () => {
 
     useEffect(() => {
         if (companyData && (location.pathname === '/dashboard' || location.pathname === '/dashboard/')) {
-            navigate('/dashboard/manage-jobs')
+            navigate('/dashboard/company-dashboard')
         }
     }, [companyData, location.pathname])
 
     const navLinks = [
+        { path: '/dashboard/company-dashboard', label: 'Dashboard', icon: Home },
         { path: '/dashboard/add-job', label: 'Add Job', icon: PlusSquare },
-        { path: '/dashboard/manage-jobs', label: 'Manage Jobs', icon: Home },
-        { path: '/dashboard/view-applications', label: 'View Applications', icon: FileText },
+        { path: '/dashboard/manage-jobs', label: 'Manage Jobs', icon: FileText },
+        { path: '/dashboard/view-applications', label: 'View Applications', icon: Users },
     ]
 
     return (
@@ -62,6 +63,13 @@ const Dashboard = () => {
                                 Welcome, {companyData.name}
                             </p>
                             <div className='flex items-center gap-3'>
+                                <button
+                                    onClick={toggleTheme}
+                                    className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    title="Toggle Theme"
+                                >
+                                    {theme === 'dark' ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-gray-600" />}
+                                </button>
                                 <img
                                     className='w-10 h-10 border-2 border-gray-200 dark:border-gray-600 rounded-full object-cover'
                                     src={companyData.image}

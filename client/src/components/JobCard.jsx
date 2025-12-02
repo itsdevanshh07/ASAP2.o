@@ -24,12 +24,12 @@ const JobCard = ({ job }) => {
         <img className='h-8' src={assets.company_icon} alt="" />
       </div>
       <h4 className='font-medium text-xl mt-2 text-navy dark:text-cream'>{job.title}</h4>
-      <div className='flex items-center gap-3 mt-2 text-xs'>
+      <div className='flex flex-wrap items-center gap-3 mt-2 text-xs'>
         <span className='bg-sky/20 border border-sky px-4 py-1.5 rounded text-navy dark:bg-sky/10 dark:border-sky/50 dark:text-sky'>{job.location}</span>
         <span className='bg-cream border border-navy px-4 py-1.5 rounded text-navy dark:bg-navy-dark dark:border-sky dark:text-cream'>{job.level}</span>
       </div>
       <p className='text-navy/70 text-sm mt-4 dark:text-cream/70' dangerouslySetInnerHTML={{ __html: job.description.slice(0, 150) }}></p>
-      <div className='mt-4 flex gap-4 text-sm'>
+      <div className='mt-4 flex flex-wrap gap-4 text-sm'>
         <button onClick={() => { navigate(`/apply-job/${job._id}`); scrollTo(0, 0) }} className='bg-navy text-white px-4 py-2 rounded hover:bg-sky hover:text-navy transition-colors font-medium'>Apply now</button>
         <button onClick={() => { navigate(`/apply-job/${job._id}`); scrollTo(0, 0) }} className='text-navy border border-navy rounded px-4 py-2 dark:text-sky dark:border-sky hover:bg-navy hover:text-white dark:hover:bg-sky dark:hover:text-navy transition-colors'>Learn more</button>
       </div>

@@ -90,6 +90,30 @@ export function ResumeBuilder({ apiBase = '' }) {
     }
   };
 
+  const handleManualSubmit = async () => {
+    setGenerating(true);
+    setPdfUrl(null);
+    try {
+      const res = await fetch(resumeUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resumeData: form, template })
+      });
+      const data = await res.json();
+      if (data.pdfUrl) {
+        const url = data.pdfUrl.startsWith('http') ? data.pdfUrl : `${base}${data.pdfUrl}`;
+        setPdfUrl(url);
+      } else {
+        alert('Could not generate PDF. Please try again.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to generate PDF.');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <motion.div
       className="max-w-6xl mx-auto p-6 bg-white rounded-2xl shadow-lg flex gap-6 dark:bg-card-bg"
@@ -145,6 +169,16 @@ export function ResumeBuilder({ apiBase = '' }) {
             </div>
             <button type="button" onClick={() => addField('skills')} className="mt-3 text-sm text-purple-600 hover:underline">+ Add Skill</button>
           </div>
+        </div>
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={handleManualSubmit}
+            disabled={generating}
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {generating ? <Loader2 className="animate-spin" size={20} /> : <FileText size={20} />}
+            {generating ? 'Generating PDF...' : 'Submit & Generate PDF'}
+          </button>
         </div>
       </div>
 
@@ -223,6 +257,6 @@ export function ResumeBuilder({ apiBase = '' }) {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </motion.div >
   );
 }

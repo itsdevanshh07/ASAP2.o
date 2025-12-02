@@ -1,4 +1,5 @@
 import Company from "../models/Company.js";
+import mongoose from "mongoose";
 import bcrypt from 'bcryptjs'
 import { v2 as cloudinary } from 'cloudinary'
 import generateToken from "../utils/generateToken.js";
@@ -216,3 +217,100 @@ export const changeVisiblity = async (req, res) => {
         res.json({ success: false, message: error.message })
     }
 }
+
+// Company Dashboard Stats
+export const getCompanyDashboard = async (req, res) => {
+    try {
+        const companyId = req.company._id;
+        const { limit = 20, jobId, minSalary, maxSalary } = req.query;
+
+        // Build match stage
+        const matchStage = {
+            companyId: companyId // JobApplication has companyId as ObjectId
+        };
+
+        if (jobId) {
+            matchStage.jobId = new mongoose.Types.ObjectId(jobId);
+        }
+
+        const pipeline = [
+            { $match: matchStage },
+            // Lookup Job
+            {
+                $lookup: {
+                    from: 'jobs',
+                    localField: 'jobId',
+                    foreignField: '_id',
+                    as: 'job'
+                }
+            },
+            { $unwind: '$job' },
+            // Lookup User
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'userId',
+                    foreignField: '_id',
+                    as: 'user'
+                }
+            },
+            { $unwind: '$user' },
+            // Apply salary filters (on job.salary)
+            {
+                $match: {
+                    ...(minSalary ? { 'job.salary': { $gte: Number(minSalary) } } : {}),
+                    ...(maxSalary ? { 'job.salary': { $lte: Number(maxSalary) } } : {})
+                }
+            },
+            // Facet for Employees List and Summary Stats
+            {
+                $facet: {
+                    employees: [
+                        { $sort: { date: -1 } },
+                        { $limit: Number(limit) },
+                        {
+                            $project: {
+                                employee_id: '$user._id',
+                                employee_name: '$user.name',
+                                employee_image: '$user.image',
+                                job_title: '$job.title',
+                                salary: '$job.salary',
+                                status: '$status',
+                                applied_at: '$date'
+                            }
+                        }
+                    ],
+                    summary: [
+                        {
+                            $group: {
+                                _id: null,
+                                totalEmployees: { $sum: 1 },
+                                totalSalary: { $sum: '$job.salary' },
+                                avgSalary: { $avg: '$job.salary' }
+                            }
+                        }
+                    ]
+                }
+            }
+        ];
+
+        const results = await JobApplication.aggregate(pipeline);
+
+        const data = results[0];
+        const summary = data.summary[0] || { totalEmployees: 0, totalSalary: 0, avgSalary: 0 };
+
+        res.json({
+            success: true,
+            employees: data.employees,
+            summary: {
+                totalEmployees: summary.totalEmployees,
+                totalSalary: summary.totalSalary,
+                avgSalary: Math.round(summary.avgSalary || 0)
+            }
+        });
+
+    } catch (error) {
+        console.error('Dashboard Error:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch dashboard data' });
+    }
+};

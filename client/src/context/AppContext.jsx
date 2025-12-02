@@ -7,7 +7,7 @@ export const AppContext = createContext()
 
 export const AppContextProvider = (props) => {
 
-    const backendUrl = import.meta.env.VITE_BACKEND_URL
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
     const { user } = useUser()
     const { getToken } = useAuth()
@@ -79,9 +79,9 @@ export const AppContextProvider = (props) => {
 
             if (data.success) {
                 setUserData(data.user)
-            } else (
+            } else {
                 toast.error(data.message)
-            )
+            }
 
         } catch (error) {
             toast.error(error.message)

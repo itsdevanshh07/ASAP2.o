@@ -5,7 +5,7 @@ import axios from 'axios';
 import { AppContext } from '../context/AppContext';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, MapPin, DollarSign, Layers, FileText } from 'lucide-react';
+import { Briefcase, MapPin, DollarSign, Layers, FileText, IndianRupee } from 'lucide-react';
 
 const AddJob = () => {
 
@@ -14,6 +14,7 @@ const AddJob = () => {
     const [category, setCategory] = useState('Programming');
     const [level, setLevel] = useState('Beginner level');
     const [salary, setSalary] = useState(0);
+    const [currency, setCurrency] = useState('USD'); // 'USD' or 'INR'
 
     const editorRef = useRef(null)
     const quillRef = useRef(null)
@@ -29,7 +30,7 @@ const AddJob = () => {
             const description = quillRef.current.root.innerHTML
 
             const { data } = await axios.post(backendUrl + '/api/company/post-job',
-                { title, description, location, salary, category, level },
+                { title, description, location, salary, category, level, currency },
                 { headers: { token: companyToken } }
             )
 
@@ -154,17 +155,36 @@ const AddJob = () => {
                         {/* Job Salary */}
                         <div>
                             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>Job Salary</label>
-                            <div className='relative'>
-                                <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                                    <DollarSign size={18} className='text-gray-400' />
+                            <div className='flex gap-2'>
+                                <div className='relative w-32'>
+                                    <select
+                                        className='block w-full pl-3 pr-8 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary dark:bg-gray-800 dark:text-white transition-colors appearance-none'
+                                        onChange={e => setCurrency(e.target.value)}
+                                        value={currency}
+                                    >
+                                        <option value="USD">USD ($)</option>
+                                        <option value="INR">INR (₹)</option>
+                                    </select>
+                                    <div className='absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none'>
+                                        <span className="text-gray-500 text-xs">▼</span>
+                                    </div>
                                 </div>
-                                <input
-                                    min={0}
-                                    className='block w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary dark:bg-gray-800 dark:text-white transition-colors'
-                                    onChange={e => setSalary(e.target.value)}
-                                    type="number"
-                                    placeholder='e.g. 50000'
-                                />
+                                <div className='relative flex-1'>
+                                    <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
+                                        {currency === 'USD' ? (
+                                            <DollarSign size={18} className='text-gray-400' />
+                                        ) : (
+                                            <IndianRupee size={18} className='text-gray-400' />
+                                        )}
+                                    </div>
+                                    <input
+                                        min={0}
+                                        className='block w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary dark:bg-gray-800 dark:text-white transition-colors'
+                                        onChange={e => setSalary(e.target.value)}
+                                        type="number"
+                                        placeholder='e.g. 50000'
+                                    />
+                                </div>
                             </div>
                         </div>
 

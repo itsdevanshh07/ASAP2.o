@@ -24,6 +24,8 @@ import chatRouter from "./routes/chatRoutes.js";
 import companyRoutes from "./routes/companyRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import jobRoutes from "./routes/jobRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
+import gamificationRoutes from "./routes/gamificationRoutes.js";
 import { clerkWebhooks } from "./controllers/webhooks.js";
 
 const app = express();
@@ -175,6 +177,8 @@ app.use(
 app.use("/api/company", companyRoutes);
 app.use("/api/users", requireAuth(), userRoutes);
 app.use("/api/jobs", jobRoutes);
+app.use("/api/admin", requireAuth(), adminRoutes);
+app.use("/api/gamification", gamificationRoutes);
 
 // --------------------------------------
 // SENTRY ERROR HANDLER
@@ -214,4 +218,3 @@ if (!process.env.VERCEL) {
 // EXPORT FOR VERCEL (SERVERLESS)
 // --------------------------------------
 export default app;
-
